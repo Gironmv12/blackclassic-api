@@ -1,3 +1,17 @@
+import { DataTypes } from "sequelize";
+import _accesos from "./accesos.js";
+import _clientes from "./clientes.js";
+import _detalleorden from "./detalleorden.js";
+import _inventarios from "./inventarios.js";
+import _mesas from "./mesas.js";
+import _ordenes from "./ordenes.js";
+import _pagos from "./pagos.js";
+import _productos from "./productos.js";
+import _recetas from "./recetas.js";
+import _reservas from "./reservas.js";
+import _usuarios from "./usuarios.js";
+import _categorias from "./categorias.js";
+
 export function initModels(sequelize) {
   const accesos = _accesos(sequelize, DataTypes);
   const clientes = _clientes(sequelize, DataTypes);
@@ -12,11 +26,6 @@ export function initModels(sequelize) {
   const usuarios = _usuarios(sequelize, DataTypes);
   const categorias = _categorias(sequelize, DataTypes);
 
-  // Relación de productos con categorias
-  productos.belongsTo(categorias, { foreignKey: "categoria_id", as: "categoria" });
-  categorias.hasMany(productos, { foreignKey: "categoria_id", as: "productos" });
-
-  // ... otras relaciones
   mesas.belongsTo(accesos, { as: "idacceso_acceso", foreignKey: "idacceso" });
   accesos.hasMany(mesas, { as: "mesas", foreignKey: "idacceso" });
   reservas.belongsTo(clientes, { as: "idcliente_cliente", foreignKey: "idcliente" });
@@ -40,6 +49,9 @@ export function initModels(sequelize) {
   pagos.belongsTo(reservas, { as: "idreserva_reserva", foreignKey: "idreserva" });
   reservas.hasMany(pagos, { as: "pagos", foreignKey: "idreserva" });
 
+  productos.belongsTo(categorias, { foreignKey: "categoria_id", as: "categoria" });
+  categorias.hasMany(productos, { foreignKey: "categoria_id", as: "productos" });
+
   return {
     accesos,
     clientes,
@@ -52,7 +64,7 @@ export function initModels(sequelize) {
     recetas,
     reservas,
     usuarios,
-    categorias, // Agregamos categorias al retorno
+    categorias,
   };
 }
 
