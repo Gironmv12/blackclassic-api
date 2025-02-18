@@ -21,7 +21,7 @@ const connectDB = async() => {
         console.log('Conexión a la base de datos establecida correctamente');
 
         //sincronizar a la base de datos
-        await sequelize.sync({ force: true });
+        await sequelize.sync();
         console.log('Tablas sincronizadas correctamente');
 
     }catch(error){

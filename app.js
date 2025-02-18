@@ -1,11 +1,19 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { connectDB } from './config/database.js';
+import userRouter from './routes/routes.js';
+import cors from 'cors';
 
 //cargar las variables de entorno
 dotenv.config();
+const corsConfig = {
+    origin: '*',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE']
+};
 
 const app = express();
+app.use(cors(corsConfig));
 
 //milddlewares
 app.use(express.json());
@@ -18,6 +26,9 @@ app.get('/', (req, res) => {
 
 //puerto de escucha
 const port = process.env.PORT || 3000;
+
+// Usar las rutas importadas
+app.use('/api', userRouter);
 
 connectDB().then(() => {
     console.log('Conexión a la base de datos establecida correctamente');
