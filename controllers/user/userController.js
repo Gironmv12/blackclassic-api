@@ -1,13 +1,13 @@
 import express from 'express';
 import { sequelize } from '../../config/database.js';
-import defineUsuarios from '../../models/usuarios.js';
+import Usuarios from '../../models/usuarios.js';
 import { body, validationResult } from 'express-validator';
 import bcrypt from 'bcryptjs';
 
 const user = express.Router();
 
 // Inicializar el modelo de usuarios
-const Usuario = defineUsuarios(sequelize);
+const Usuario = Usuarios(sequelize);
 
 // Crear un usuario
 user.post('/create', [

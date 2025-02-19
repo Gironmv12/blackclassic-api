@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import { connectDB } from './config/database.js';
 import userRouter from './routes/routes.js';
+import authRouter from './routes/authRoute.js';
 import cors from 'cors';
 
 //cargar las variables de entorno
@@ -30,6 +31,9 @@ const port = process.env.PORT || 3000;
 // Usar las rutas importadas
 app.use('/api', userRouter);
 
+// Usar las ruta de autenticación
+app.use('/api', authRouter);
+
 connectDB().then(() => {
     console.log('Conexión a la base de datos establecida correctamente');
 
@@ -39,3 +43,5 @@ connectDB().then(() => {
 }).catch(error => {
     console.error('No se pudo conectar a la base de datos:', error);
 });
+
+
