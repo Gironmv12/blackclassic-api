@@ -11,6 +11,7 @@ import _recetas from "./recetas.js";
 import _reservas from "./reservas.js";
 import _usuarios from "./usuarios.js";
 import _categorias from "./categorias.js";
+import _meseroMesas from "./meseroMesa.js"; // Solo se importa una vez
 
 export function initModels(sequelize) {
   const accesos = _accesos(sequelize, DataTypes);
@@ -25,6 +26,7 @@ export function initModels(sequelize) {
   const reservas = _reservas(sequelize, DataTypes);
   const usuarios = _usuarios(sequelize, DataTypes);
   const categorias = _categorias(sequelize, DataTypes);
+  const meseroMesas = _meseroMesas(sequelize, DataTypes); // Inicializar el modelo
 
   mesas.belongsTo(accesos, { as: "idacceso_acceso", foreignKey: "idacceso" });
   accesos.hasMany(mesas, { as: "mesas", foreignKey: "idacceso" });
@@ -51,6 +53,9 @@ export function initModels(sequelize) {
 
   productos.belongsTo(categorias, { foreignKey: "categoria_id", as: "categoria" });
   categorias.hasMany(productos, { foreignKey: "categoria_id", as: "productos" });
+  
+  meseroMesas.belongsTo(usuarios, { as: "usuario", foreignKey: "usuarioId" });
+  usuarios.hasMany(meseroMesas, { as: "MeserosMesas", foreignKey: "usuarioId" });
 
   return {
     accesos,
@@ -65,6 +70,7 @@ export function initModels(sequelize) {
     reservas,
     usuarios,
     categorias,
+    meseroMesas,
   };
 }
 
