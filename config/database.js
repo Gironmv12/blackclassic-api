@@ -5,10 +5,13 @@ dotenv.config();
 
 const isProduction = process.env.NODE_ENV === "production";
 
-// Conexión en producción solo si estamos en producción y DATABASE_URL está definida
+// Conexión en producción solo si estamos en producción y DATABASE_PUBLIC_URL o DATABASE_URL está definida
 let sequelize;
-if (isProduction && process.env.DATABASE_URL) {
-    sequelize = new Sequelize(process.env.DATABASE_URL, {
+if (isProduction && (process.env.DATABASE_PUBLIC_URL || process.env.DATABASE_URL)) {
+    const connectionString = process.env.DATABASE_PUBLIC_URL || process.env.DATABASE_URL;
+    // Debug: muestra la cadena de conexión que se utilizará
+    console.log("Connection string usada:", connectionString);
+    sequelize = new Sequelize(connectionString, {
         dialect: "postgres",
         protocol: "postgres",
         dialectOptions: {
