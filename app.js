@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import { connectDB } from './config/database.js';
 import userRouter from './routes/routes.js';
 import authRouter from './routes/authRoute.js';
+import aceessoRouter from './routes/accesoRoutes.js';
+import mesasRouter from './routes/mesasRouter.js';
 import cors from 'cors';
 
 //cargar las variables de entorno
@@ -33,6 +35,12 @@ app.use('/api', userRouter);
 
 // Usar las ruta de autenticación
 app.use('/api', authRouter);
+
+//usar la ruta de accesos
+app.use('/api', aceessoRouter);
+
+//usar la ruta de mesas
+app.use('/api', mesasRouter);
 
 connectDB().then(() => {
     console.log('Conexión a la base de datos establecida correctamente');
