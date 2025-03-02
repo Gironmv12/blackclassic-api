@@ -37,6 +37,10 @@ export default function (sequelize) {
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    fecha: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    }
   }, {
     sequelize,
     tableName: "reservas",

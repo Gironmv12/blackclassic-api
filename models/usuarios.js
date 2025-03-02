@@ -45,7 +45,7 @@ export default function (sequelize) {
     },
   }, {
     sequelize,
-    tableName: "usuarios",
+    tableName: "usuarios", // Asegúrate que el nombre sea en minúsculas
     schema: "public",
     timestamps: false,
     indexes: [
