@@ -20,7 +20,7 @@ if (isProduction && (process.env.DATABASE_PUBLIC_URL || process.env.DATABASE_URL
                 rejectUnauthorized: false // Ajusta esto según tus necesidades
             }
         },
-        logging: false
+        logging: console.log,
     });
 } else {
     // Conexión local
