@@ -2,6 +2,7 @@ import express from 'express';
 import { sequelize } from '../../config/database.js';
 import initModels from '../../models/init-models.js';
 import { body, validationResult } from 'express-validator';
+import { sendEmail } from '../../utils/NodeMailer.js';
 import QRCode from 'qrcode';
 
 const models = initModels(sequelize);
@@ -19,7 +20,7 @@ Función: Recibe los datos del formulario (incluyendo id de la mesa, fecha, hora
 */
 
 reservas.post('/create', [
-    body('idmesa').isInt({ gt: 0 }).withMessage('idmesa debe ser entero positivo'),
+    body('idmesa').isInt({ gt: 0 }).withMessage('id mesa debe ser entero positivo'),
     // Nota: Si se envía idcliente existente, se usará; sino se crearán los datos
     body('nombre').notEmpty().withMessage('Nombre es requerido'),
     body('correo').isEmail().withMessage('Correo debe ser un email válido'),
@@ -35,26 +36,17 @@ reservas.post('/create', [
     }
     const t = await sequelize.transaction();
     try {
-        // Se extraen todos los datos relevantes
         const { idmesa, idcliente, fecha, horainicio, horafin, nombre, correo, telefono } = req.body;
-
-        // Verificar que la mesa existe y está disponible
         const mesa = await Mesa.findByPk(idmesa);
         if (!mesa || mesa.estado !== 'disponible') {
             await t.rollback();
             return res.status(400).json({ error: 'Mesa no disponible' });
         }
-
         let cliente = idcliente ? await Cliente.findByPk(idcliente) : null;
-        // Crear cliente si no existe
         if (!cliente) {
             cliente = await Cliente.create({ nombre, correo, telefono }, { transaction: t });
         }
-
-        // Generar la cadena de referencia del QR en lugar de la imagen
         const qrData = `reserva-${cliente.id}-${idmesa}-${Date.now()}`;
-
-        // Crear la reserva almacenando la cadena QR de referencia
         const nuevaReserva = await Reserva.create({
             idmesa,
             idcliente: cliente.id,
@@ -63,11 +55,21 @@ reservas.post('/create', [
             codigoqr: qrData,
             fecha
         }, { transaction: t });
-
-        // Actualizar el estado de la mesa a 'reservada'
         mesa.estado = 'reservada';
         await mesa.save({ transaction: t });
         await t.commit();
+
+        // Generar el QR como DataURL a partir de la cadena de referencia
+        const qrImageDataURL = await QRCode.toDataURL(qrData);
+        // Enviar correo al cliente con el QR generado
+        await sendEmail(
+            cliente.correo,
+            'Reserva Confirmada',
+            `<p>Hola ${cliente.nombre},</p>
+             <p>Su reserva ha sido confirmada. Puede utilizar el siguiente QR para acceder:</p>
+             <p><img src="${qrImageDataURL}" alt="QR Code"/></p>
+             <p>Gracias por preferirnos.</p>`
+        );
 
         return res.status(201).json(nuevaReserva);
     } catch (error) {
@@ -152,6 +154,30 @@ reservas.get('/:id', async (req, res) => {
     } catch (error) {
         console.error("Error al obtener la reserva: ", error);
         return res.status(500).json({ error: 'Error al obtener la reserva' });
+    }
+});
+
+//obtener todas las reservas
+reservas.get('/', async (req, res) => {
+    try {
+        const reservas = await Reserva.findAll({
+            include: [
+                {
+                    model: Mesa,
+                    as: "idmesa_mesa",
+                    attributes: ['numeroasientos']
+                },
+                {
+                    model: Cliente,
+                    as: "idcliente_cliente",
+                    attributes: ['nombre', 'correo', 'telefono']
+                }
+            ]
+        });
+        return res.status(200).json(reservas);
+    } catch (error) {
+        console.error("Error al obtener las reservas: ", error);
+        return res.status(500).json({ error: 'Error al obtener las reservas' });
     }
 });
 
