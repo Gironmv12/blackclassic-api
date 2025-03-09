@@ -67,7 +67,6 @@ reservas.post('/create', [
                 cliente.correo,
                 'Reserva Confirmada',
                 `<p>Hola ${cliente.nombre},</p>
-                 <p>Nimodos me debes un besito:)❤️</p>
                  <p>Su reserva ha sido confirmada. Puede utilizar el siguiente QR para acceder:</p>
                  <p><img src="cid:qrCode"/></p>
                  <p>Gracias por preferirnos.</p>`,
