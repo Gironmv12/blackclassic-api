@@ -21,14 +21,12 @@ Función: Recibe los datos del formulario (incluyendo id de la mesa, fecha, hora
 
 reservas.post('/create', [
     body('idmesa').isInt({ gt: 0 }).withMessage('id mesa debe ser entero positivo'),
-    // Nota: Si se envía idcliente existente, se usará; sino se crearán los datos
     body('nombre').notEmpty().withMessage('Nombre es requerido'),
     body('correo').isEmail().withMessage('Correo debe ser un email válido'),
     body('telefono').optional().isString(),
     body('fecha').isDate().withMessage('Fecha debe ser una fecha válida'),
     body('horainicio').isISO8601().withMessage('Hora de inicio debe ser una fecha/hora válida'),
     body('horafin').isISO8601().withMessage('Hora de fin debe ser una fecha/hora válida')
-    // Se eliminó la validación para numPersonas
 ], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -57,23 +55,34 @@ reservas.post('/create', [
         }, { transaction: t });
         mesa.estado = 'reservada';
         await mesa.save({ transaction: t });
+        // Commit de la transacción antes de enviar el correo
         await t.commit();
 
-        // Generar el QR como DataURL a partir de la cadena de referencia
-        const qrImageDataURL = await QRCode.toDataURL(qrData);
-        // Enviar correo al cliente con el QR generado
-        await sendEmail(
-            cliente.correo,
-            'Reserva Confirmada',
-            `<p>Hola ${cliente.nombre},</p>
-             <p>Su reserva ha sido confirmada. Puede utilizar el siguiente QR para acceder:</p>
-             <p><img src="${qrImageDataURL}" alt="QR Code"/></p>
-             <p>Gracias por preferirnos.</p>`
-        );
+        // Generar el QR como DataURL usando la cadena almacenada en nuevaReserva.codigoqr
+        const qrImageDataURL = await QRCode.toDataURL(nuevaReserva.codigoqr);
+
+        // Intentar enviar el correo; si falla, loguear el error pero no alterar la respuesta
+        try {
+            await sendEmail(
+                cliente.correo,
+                'Reserva Confirmada',
+                `<p>Hola ${cliente.nombre},</p>
+                 <p>Su reserva ha sido confirmada. Puede utilizar el siguiente QR para acceder:</p>
+                 <p><img src="${qrImageDataURL}" alt="QR Code"/></p>
+                 <p>Gracias por preferirnos.</p>`
+            );
+        } catch (emailError) {
+            console.error('Error al enviar el correo, pero la reserva ya se confirmó: ', emailError);
+        }
 
         return res.status(201).json(nuevaReserva);
     } catch (error) {
-        await t.rollback();
+        // Solo se hace rollback si la transacción aún no ha sido finalizada
+        try {
+            await t.rollback();
+        } catch (rollbackError) {
+            console.error('Error al hacer rollback: ', rollbackError);
+        }
         return res.status(500).json({ error: 'Error al crear la reserva' });
     }
 });
