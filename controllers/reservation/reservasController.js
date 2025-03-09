@@ -68,13 +68,19 @@ reservas.post('/create', [
                 'Reserva Confirmada',
                 `<p>Hola ${cliente.nombre},</p>
                  <p>Su reserva ha sido confirmada. Puede utilizar el siguiente QR para acceder:</p>
-                 <p><img src="${qrImageDataURL}" alt="QR Code"/></p>
-                 <p>Gracias por preferirnos.</p>`
+                 <p><img src="cid:qrCode"/></p>
+                 <p>Gracias por preferirnos.</p>`,
+                [
+                    {
+                        filename: 'qr.png',
+                        content: Buffer.from(qrImageDataURL.split(',')[1], 'base64'),
+                        cid: 'qrCode' // Este id debe coincidir con el src del <img>
+                    }
+                ]
             );
         } catch (emailError) {
             console.error('Error al enviar el correo, pero la reserva ya se confirmó: ', emailError);
         }
-
         return res.status(201).json(nuevaReserva);
     } catch (error) {
         // Solo se hace rollback si la transacción aún no ha sido finalizada
