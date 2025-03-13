@@ -74,7 +74,7 @@ reservas.post('/create', [
                     {
                         filename: 'qr.png',
                         content: Buffer.from(qrImageDataURL.split(',')[1], 'base64'),
-                        cid: 'qrCode' // Este id debe coincidir con el src del <img>
+                        cid: 'qrCode'
                     }
                 ]
             );
