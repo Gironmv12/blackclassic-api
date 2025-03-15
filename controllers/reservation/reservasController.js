@@ -23,10 +23,7 @@ reservas.post('/create', [
     body('idmesa').isInt({ gt: 0 }).withMessage('id mesa debe ser entero positivo'),
     body('nombre').notEmpty().withMessage('Nombre es requerido'),
     body('correo').isEmail().withMessage('Correo debe ser un email válido'),
-    body('telefono').optional().isString(),
-    body('fecha').isDate().withMessage('Fecha debe ser una fecha válida'),
-    body('horainicio').isISO8601().withMessage('Hora de inicio debe ser una fecha/hora válida'),
-    body('horafin').isISO8601().withMessage('Hora de fin debe ser una fecha/hora válida')
+    body('telefono').optional().isString()
 ], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -34,7 +31,7 @@ reservas.post('/create', [
     }
     const t = await sequelize.transaction();
     try {
-        const { idmesa, idcliente, fecha, horainicio, horafin, nombre, correo, telefono } = req.body;
+        const { idmesa, idcliente, nombre, correo, telefono } = req.body;
         const mesa = await Mesa.findByPk(idmesa);
         if (!mesa || mesa.estado !== 'disponible') {
             await t.rollback();
@@ -44,24 +41,32 @@ reservas.post('/create', [
         if (!cliente) {
             cliente = await Cliente.create({ nombre, correo, telefono }, { transaction: t });
         }
+        // Se obtiene la hora de inicio preestablecida en la mesa.
+        const reservaHorainicio = mesa.horainicio;
+        const duracionReserva = 2 * 60 * 60 * 1000; // 2 horas en milisegundos
+        const reservaHorafin = new Date(new Date(reservaHorainicio).getTime() + duracionReserva);
+        
+        // Se genera un código QR único para la reserva.
         const qrData = `reserva-${cliente.id}-${idmesa}-${Date.now()}`;
         const nuevaReserva = await Reserva.create({
             idmesa,
             idcliente: cliente.id,
-            horainicio,
-            horafin,
+            // No se envía fecha; se asigna automáticamente por defaultValue en el modelo
+            horainicio: reservaHorainicio,
+            horafin: reservaHorafin,
             codigoqr: qrData,
-            fecha
         }, { transaction: t });
+        // Actualizar el estado de la mesa a "reservada"
         mesa.estado = 'reservada';
         await mesa.save({ transaction: t });
+        
         // Commit de la transacción antes de enviar el correo
         await t.commit();
-
-        // Generar el QR como DataURL usando la cadena almacenada en nuevaReserva.codigoqr
+        
+        // Generar el QR en formato DataURL
         const qrImageDataURL = await QRCode.toDataURL(nuevaReserva.codigoqr);
 
-        // Intentar enviar el correo; si falla, loguear el error pero no alterar la respuesta
+        // Enviar correo de confirmación
         try {
             await sendEmail(
                 cliente.correo,
@@ -83,7 +88,7 @@ reservas.post('/create', [
         }
         return res.status(201).json(nuevaReserva);
     } catch (error) {
-        // Solo se hace rollback si la transacción aún no ha sido finalizada
+        console.error('Error al crear la reserva: ', error);
         try {
             await t.rollback();
         } catch (rollbackError) {

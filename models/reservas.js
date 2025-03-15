@@ -31,7 +31,7 @@ export default function (sequelize) {
     },
     horafin: {
       type: DataTypes.DATE,
-      allowNull: false,
+      allowNull: true,
     },
     codigoqr: {
       type: DataTypes.TEXT,
@@ -40,6 +40,7 @@ export default function (sequelize) {
     fecha: {
       type: DataTypes.DATE,
       allowNull: false,
+      defaultValue: DataTypes.NOW
     }
   }, {
     sequelize,

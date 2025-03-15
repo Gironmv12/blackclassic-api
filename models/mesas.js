@@ -30,6 +30,11 @@ export default function (sequelize) {
       allowNull: true,
       defaultValue: "disponible",
     },
+    horainicio: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: new Date("2025-03-15T18:00:00") 
+    }
   }, {
     sequelize,
     tableName: "mesas",
