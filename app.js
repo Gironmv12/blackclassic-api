@@ -6,6 +6,7 @@ import authRouter from './routes/authRoute.js';
 import aceessoRouter from './routes/accesoRoutes.js';
 import mesasRouter from './routes/mesasRouter.js';
 import reservasRouter from './routes/reservasRoutes.js';
+import recepcionRoute from './routes/recepcionRoute.js';
 import cors from 'cors';
 
 //cargar las variables de entorno
@@ -45,6 +46,9 @@ app.use('/api', mesasRouter);
 
 //usar la ruta de reservas
 app.use('/api', reservasRouter);
+
+//usar la ruta de recepcion
+app.use('/api', recepcionRoute);
 
 connectDB().then(() => {
     console.log('Conexión a la base de datos establecida correctamente');
