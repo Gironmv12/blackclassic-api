@@ -7,6 +7,8 @@ import aceessoRouter from './routes/accesoRoutes.js';
 import mesasRouter from './routes/mesasRouter.js';
 import reservasRouter from './routes/reservasRoutes.js';
 import recepcionRoute from './routes/recepcionRoute.js';
+import categoriasRouter from './routes/categoriasRoute.js';
+import productosRoute from './routes/productosRoute.js';
 import cors from 'cors';
 
 //cargar las variables de entorno
@@ -49,6 +51,12 @@ app.use('/api', reservasRouter);
 
 //usar la ruta de recepcion
 app.use('/api', recepcionRoute);
+
+//usar la ruta de categorias
+app.use('/api', categoriasRouter);
+
+//usar la ruta de productos
+app.use('/api', productosRoute);
 
 connectDB().then(() => {
     console.log('Conexión a la base de datos establecida correctamente');

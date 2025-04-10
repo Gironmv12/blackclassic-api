@@ -18,7 +18,7 @@ export default function (sequelize) {
       type: DataTypes.BIGINT,
       allowNull: false,
       references: {
-        model: _categorias(sequelize), // Referencia a la tabla categorias
+        model: _categorias(sequelize),
         key: 'id',
       },
     },
@@ -27,11 +27,9 @@ export default function (sequelize) {
       allowNull: false,
     },
     estado: {
-      type: DataTypes.TEXT,
+      type: DataTypes.ENUM('disponible', 'agotado', 'promoción'),
       allowNull: false,
-      validate: {
-        isIn: [['disponible', 'agotado', 'promoción']], // Validación para estado
-      },
+      // La validación no es estrictamente necesaria, ya que el ENUM lo controla.
     },
     imagen: {
       type: DataTypes.TEXT,

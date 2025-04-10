@@ -8,25 +8,22 @@ export default function (sequelize) {
             type: DataTypes.BIGINT,
             allowNull: false,
             primaryKey: true,
-          },
-          nombre: {
+        },
+        nombre: {
             type: DataTypes.TEXT,
             allowNull: false,
-            validate: {
-              isIn: [['materia prima', 'botella', 'bebida']], // Validación de las opciones posibles
-            }
-          }
+        }
     }, {
         sequelize,
-    tableName: "categorias",
-    schema: "public",
-    timestamps: false,
-    indexes: [
-      {
-        name: "categorias_pkey",
-        unique: true,
-        fields: [{ name: "id" }],
-      },
-    ],
+        tableName: "categorias",
+        schema: "public",
+        timestamps: false,
+        indexes: [
+            {
+                name: "categorias_pkey",
+                unique: true,
+                fields: [{ name: "id" }],
+            },
+        ],
     });
 };

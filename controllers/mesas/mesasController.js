@@ -33,7 +33,7 @@ mesas.post('/create', [
             nombre,
             idacceso,
             numeroasientos,
-            estado: estado ? estado : 'disponible'
+            estado: estado ? estado : 'disponible' 
         });
         return res.status(201).json(newMesa);
     } catch (error) {

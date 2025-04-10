@@ -118,6 +118,7 @@ reservas.get('/qr/:id', async (req, res) => {
 //eliminar una reserva
 reservas.delete('/:id', async (req, res) => {
     const { id } = req.params;
+    console.log('el ID recibido para borrar es: ', id)
     const t = await sequelize.transaction();
     try {
         const reserva = await Reserva.findByPk(id);
