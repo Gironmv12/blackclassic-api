@@ -32,8 +32,9 @@ if (isProduction && (process.env.DATABASE_PUBLIC_URL || process.env.DATABASE_URL
             host: process.env.DB_HOST,
             port: process.env.DB_PORT,
             dialect: "postgres",
-            logging: false
-        }
+            logging: console.log
+        },
+
     );
     // Opción: para pruebas de conexión local, puedes comentar DATABASE_URL en tu .env
 }

@@ -1,14 +1,12 @@
 import express from 'express';
 import { sequelize } from '../../config/database.js';
 import { body, validationResult } from 'express-validator';
-import MesasModel from '../../models/mesas.js';
-import AccesosModel from '../../models/accesos.js';
+import initModels from '../../models/init-models.js';
 
 const mesas = express.Router();
 
-// Inicializar el modelo de mesas
-const Mesa = MesasModel(sequelize);
-const Accesos = AccesosModel(sequelize);
+const models = initModels(sequelize);
+const { mesas: Mesa, accesos: Accesos } = models;
 
 //crear una mesa
 mesas.post('/create', [
@@ -77,7 +75,7 @@ mesas.post('/create', [
 });*/
 
 //obtener todas las mesas creadas
-mesas.get('/all', async (req, res) => {
+mesas.get('/', async (req, res) => {
     try {
         const mesas = await Mesa.findAll();
         return res.status(200).json(mesas);
@@ -85,6 +83,27 @@ mesas.get('/all', async (req, res) => {
         return res.status(500).json({ error: 'Error al obtener las mesas' });
     }
 });
+
+mesas.get('/table-data', async (req, res) => {
+    try {
+      const mesasData = await Mesa.findAll({
+        attributes: ['nombre','numeroasientos','estado'],
+        include: [{
+          model: Accesos,
+          as: 'idacceso_acceso',
+          attributes: ['nombre']
+        }]
+      });
+      console.log('mesasData:', mesasData);
+      return res.status(200).json(mesasData);
+    } catch (error) {
+      console.error('❌ Error en /table-data:', error);
+      return res.status(500).json({
+        error: 'Error al obtener los datos de las mesas',
+        details: error.message
+      });
+    }
+  });
 
 //obtener una mesa por id
 mesas.get('/:id', async (req, res) => {
@@ -143,5 +162,7 @@ mesas.delete('/:id', async (req, res) => {
         return res.status(500).json({ error: 'Error al eliminar la mesa' });
     }
 });
+
+
 
 export default mesas; 
