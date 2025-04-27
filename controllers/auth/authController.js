@@ -34,7 +34,10 @@ auth.post('/login', loginValidations, async (req, res) => {
 
     try {
         const usuario = await Usuario.findOne({
-            where: { correo }
+            where: { correo },
+            include: [
+                { model: models.roles, as: 'rolAsociado', attributes: ['nombre'] }
+            ]
         });
 
         if (!usuario) {
@@ -52,7 +55,7 @@ auth.post('/login', loginValidations, async (req, res) => {
             id: usuario.id,
             nombre: usuario.nombre,
             correo: usuario.correo,
-            rol: usuario.rol
+            rol: usuario.rolAsociado.nombre
         };
 
         // Generar el token JWT
@@ -66,7 +69,5 @@ auth.post('/login', loginValidations, async (req, res) => {
         res.status(500).json({ message: 'Error al iniciar sesión' });
     }
 });
-
-
 
 export default auth;
