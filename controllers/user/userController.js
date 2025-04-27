@@ -1,13 +1,14 @@
 import express from 'express';
 import { sequelize } from '../../config/database.js';
-import Usuarios from '../../models/usuarios.js';
 import { body, validationResult } from 'express-validator';
 import bcrypt from 'bcryptjs';
+import initModels from '../../models/init-models.js';
 
 const user = express.Router();
 
 // Inicializar el modelo de usuarios
-const Usuario = Usuarios(sequelize);
+const models = initModels(sequelize);
+const { usuarios: Usuario, roles: Rol, estados: Estado } = models;
 
 // Crear un usuario
 user.post('/create', [
@@ -17,20 +18,17 @@ user.post('/create', [
     body('telefono').isString().notEmpty().withMessage('El telefono es requerido'),
     body('correo').isEmail().notEmpty().withMessage('El correo es requerido'),
     body('contrasena').isString().notEmpty().withMessage('La contraseña es requerida'),
-    body('rol').isString().notEmpty().withMessage('El rol es requerido'),
-    //estado por defecto es activo se agregue o no, automáticamente se agrega como "activo"
-    body('estado').isString().optional(),
+    body('rol_id').isInt().notEmpty().withMessage('El rol es requerido'), 
+    body('estado_id').isInt().optional(),
 ], async (req, res) => {
-
     const errors = validationResult(req);
-    if(!errors.isEmpty()){
+    if (!errors.isEmpty()) {
         return res.status(400).json(errors.array());
     }
 
-    const { nombre, apellidopaterno, apellidomaterno, telefono, correo, contrasena, rol, estado } = req.body;
+    const { nombre, apellidopaterno, apellidomaterno, telefono, correo, contrasena, rol_id, estado_id } = req.body;
 
     try {
-        //generar el sal y hashear la contraseña
         const salt = bcrypt.genSaltSync(10);
         const contrasenaHash = bcrypt.hashSync(contrasena, salt);
 
@@ -41,8 +39,8 @@ user.post('/create', [
             telefono,
             correo,
             contrasena: contrasenaHash,
-            rol,
-            estado
+            rol_id,
+            estado_id: estado_id || null,
         });
 
         res.status(201).json(nuevoUsuario);
@@ -54,9 +52,14 @@ user.post('/create', [
 });
 
 // Obtener todos los usuarios
-user.get('/all', async (req, res) => {
+user.get('/', async (req, res) => {
     try {
-        const usuarios = await Usuario.findAll();
+        const usuarios = await Usuario.findAll({
+            include: [
+                { model: Rol, as: 'rolAsociado', attributes: ['nombre'] },
+                { model: Estado, as: 'estado', attributes: ['nombre'] },
+            ],
+        });
         res.status(200).json(usuarios);
     } catch (error) {
         console.log(error);
@@ -69,10 +72,15 @@ user.get('/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
-        const usuario = await Usuario.findByPk(id);
-        if(usuario){
+        const usuario = await Usuario.findByPk(id, {
+            include: [
+                { model: Rol, as: 'rolAsociado', attributes: ['nombre'] },
+                { model: Estado, as: 'estado', attributes: ['nombre'] },
+            ],
+        });
+        if (usuario) {
             res.status(200).json(usuario);
-        }else{
+        } else {
             res.status(404).json({ message: 'Usuario no encontrado' });
         }
     } catch (error) {
@@ -84,22 +92,27 @@ user.get('/:id', async (req, res) => {
 //actualizar un usuario
 user.put('/:id', async (req, res) => {
     const { id } = req.params;
-    const { nombre, apellidopaterno, apellidomaterno, telefono, correo, contrasena, rol, estado } = req.body;
+    const { nombre, apellidopaterno, apellidomaterno, telefono, correo, contrasena, rol_id, estado_id } = req.body;
 
     try {
         const usuario = await Usuario.findByPk(id);
-        if(usuario){
+        if (usuario) {
             usuario.nombre = nombre;
             usuario.apellidopaterno = apellidopaterno;
             usuario.apellidomaterno = apellidomaterno;
             usuario.telefono = telefono;
             usuario.correo = correo;
-            usuario.rol = rol;
-            usuario.estado = estado;
+            usuario.rol_id = rol_id;
+            usuario.estado_id = estado_id;
+
+            if (contrasena) {
+                const salt = bcrypt.genSaltSync(10);
+                usuario.contrasena = bcrypt.hashSync(contrasena, salt);
+            }
 
             await usuario.save();
             res.status(200).json(usuario);
-        }else{
+        } else {
             res.status(404).json({ message: 'Usuario no encontrado' });
         }
     } catch (error) {
@@ -108,16 +121,16 @@ user.put('/:id', async (req, res) => {
     }
 });
 
-//eliminar un usuario
+// Eliminar un usuario
 user.delete('/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
         const usuario = await Usuario.findByPk(id);
-        if(usuario){
+        if (usuario) {
             await usuario.destroy();
             res.status(200).json({ message: 'Usuario eliminado correctamente' });
-        }else{
+        } else {
             res.status(404).json({ message: 'Usuario no encontrado' });
         }
     } catch (error) {

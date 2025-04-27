@@ -1,13 +1,16 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs'; // Importa bcryptjs para comparar contraseñas hasheadas
-import { body, validationResult } from 'express-validator';
 import { sequelize } from '../../config/database.js';
-import usuarios from '../../models/usuarios.js';
+import { body, validationResult } from 'express-validator';
+import initModels from '../../models/init-models.js';
+
 
 const auth = express.Router();
 
-const Usuario = usuarios(sequelize);
+const models = initModels(sequelize);
+const { usuarios: Usuario } = models;
+
 
 // Validaciones para el login
 const loginValidations = [
@@ -44,15 +47,19 @@ auth.post('/login', loginValidations, async (req, res) => {
             return res.status(400).json({ message: 'Contraseña incorrecta' });
         }
 
-        // Generar el token JWT
-        const token = jwt.sign({
+        // Preparar payload mínimo para el token
+        const payload = {
             id: usuario.id,
             nombre: usuario.nombre,
             correo: usuario.correo,
             rol: usuario.rol
-        }, 'secretkey', { expiresIn: '1h' });
+        };
 
-        res.status(200).json({ token });
+        // Generar el token JWT
+        const token = jwt.sign(payload, 'secretkey', { expiresIn: '1h' });
+
+        // Retornar token junto a datos mínimos del usuario
+        res.status(200).json({ token, user: payload });
 
     } catch (error) {
         console.log(error);

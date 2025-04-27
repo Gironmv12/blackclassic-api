@@ -11,7 +11,9 @@ import _recetas from "./recetas.js";
 import _reservas from "./reservas.js";
 import _usuarios from "./usuarios.js";
 import _categorias from "./categorias.js";
-import _meseroMesas from "./meseroMesa.js"; // Solo se importa una vez
+import _meseroMesas from "./meseroMesa.js";
+import _roles from "./roles.js"; 
+import _estados from "./estados.js"; 
 
 export function initModels(sequelize) {
   const accesos = _accesos(sequelize, DataTypes);
@@ -26,8 +28,11 @@ export function initModels(sequelize) {
   const reservas = _reservas(sequelize, DataTypes);
   const usuarios = _usuarios(sequelize, DataTypes);
   const categorias = _categorias(sequelize, DataTypes);
-  const meseroMesas = _meseroMesas(sequelize, DataTypes); // Inicializar el modelo
+  const meseroMesas = _meseroMesas(sequelize, DataTypes);
+  const roles = _roles(sequelize, DataTypes); 
+  const estados = _estados(sequelize, DataTypes); 
 
+  // Relaciones existentes
   mesas.belongsTo(accesos, { as: "idacceso_acceso", foreignKey: "idacceso" });
   accesos.hasMany(mesas, { as: "mesas", foreignKey: "idacceso" });
   reservas.belongsTo(clientes, { as: "idcliente_cliente", foreignKey: "idcliente" });
@@ -53,9 +58,16 @@ export function initModels(sequelize) {
 
   productos.belongsTo(categorias, { foreignKey: "categoria_id", as: "categoria" });
   categorias.hasMany(productos, { foreignKey: "categoria_id", as: "productos" });
-  
+
   meseroMesas.belongsTo(usuarios, { as: "usuario", foreignKey: "usuarioId" });
   usuarios.hasMany(meseroMesas, { as: "MeserosMesas", foreignKey: "usuarioId" });
+
+  // Relaciones nuevas
+  usuarios.belongsTo(roles, { as: "rolAsociado", foreignKey: "rol_id" });
+  roles.hasMany(usuarios, { as: "usuarios", foreignKey: "rol_id" });
+
+  usuarios.belongsTo(estados, { as: "estado", foreignKey: "estado_id" });
+  estados.hasMany(usuarios, { as: "usuarios", foreignKey: "estado_id" });
 
   return {
     accesos,
@@ -71,6 +83,8 @@ export function initModels(sequelize) {
     usuarios,
     categorias,
     meseroMesas,
+    roles, 
+    estados, 
   };
 }
 

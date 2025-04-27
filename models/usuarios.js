@@ -1,4 +1,6 @@
 import { DataTypes } from "sequelize";
+import estados from "./estados.js";
+import roles from "./roles.js";
 
 export default function (sequelize) {
   return sequelize.define("usuarios", {
@@ -34,14 +36,21 @@ export default function (sequelize) {
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    rol: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    estado: {
-      type: DataTypes.TEXT,
+    rol_id: {
+      type: DataTypes.BIGINT,
       allowNull: true,
-      defaultValue: "activo",
+      references: {
+        model: roles(sequelize),
+        key: "id",
+      },
+    },
+    estado_id: {
+      type: DataTypes.BIGINT,
+      allowNull: true,
+      references: {
+        model: estados(sequelize),
+        key: "id",
+      },
     },
   }, {
     sequelize,
