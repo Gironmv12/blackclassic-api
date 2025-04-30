@@ -39,43 +39,9 @@ mesas.post('/create', [
     }
 }); 
 
-//obtener mesas por idacceso
-/*mesas.get('/available/:idacceso', async (req, res) => {
-    const { idacceso } = req.params;
-    try {
-        // Verificar que el acceso exista
-        const accesoExists = await Accesos.findByPk(idacceso);
-        if (!accesoExists) {
-            return res.status(400).json({ error: 'Acceso no encontrado' });
-        }
-        
-        // Buscar mesas asociadas a este acceso y que estén disponibles
-        const mesasDisponibles = await Mesa.findAll({
-            where: {
-                idacceso: idacceso,
-                estado: 'disponible'
-            }
-        });
-        
-        // Procesar cada mesa agregando la info de interfaz (horarios disponibles y, opcionalmente, slots)
-        const mesasCards = mesasDisponibles.map(mesa => ({
-            id: mesa.id,
-            nombre: mesa.nombre,
-            capacidad: mesa.numeroasientos,
-            horariosDisponibles: "Disponible a partir de las 6:00 PM",
-            estado: mesa.estado,
-            // slots/reservas: aquí podrías agregar lógica adicional según las reservas actuales o tiempos de limpieza
-        }));
-        
-        return res.status(200).json(mesasCards);
-        
-    } catch (error) {
-        return res.status(500).json({ error: 'Error al obtener mesas disponibles' });
-    }
-});*/
 
 //obtener todas las mesas creadas
-mesas.get('/', async (req, res) => {
+mesas.get('/all', async (req, res) => {
     try {
         const mesas = await Mesa.findAll();
         return res.status(200).json(mesas);
@@ -160,6 +126,63 @@ mesas.delete('/:id', async (req, res) => {
         return res.status(200).json({ message: 'Mesa eliminada' });
     } catch (error) {
         return res.status(500).json({ error: 'Error al eliminar la mesa' });
+    }
+});
+
+/*
+============================
+Aqui empieza el flujo del sistema
+============================
+*/
+//obtener mesas ocupadas y reservadas
+
+// Obtener mesas ocupadas y reservadas
+mesas.get('/status/ocupadas-reservadas', async (req, res) => {
+    try {
+        const mesas = await Mesa.findAll({
+            where: {
+                estado: ['reservada', 'ocupada'] // Filtrar por estados "reservada" y "ocupada"
+            }
+        });
+        return res.status(200).json(mesas);
+    } catch (error) {
+        return res.status(500).json({ error: 'Error al obtener las mesas ocupadas y reservadas' });
+    }
+});
+
+//obtener informacion de una mesa ocupada o reservada
+mesas.get('/details/:id', async (req, res) => {
+    const { id } = req.params; // ID de la mesa
+    try {
+        const mesa = await Mesa.findByPk(id, {
+            include: [
+                {
+                    model: Accesos,
+                    as: 'idacceso_acceso', // Alias definido en init-models
+                    attributes: ['nombre'] // Tipo de acceso
+                },
+                {
+                    model: models.reservas,
+                    as: 'reservas', // Alias corregido según init-models.js
+                    include: [
+                        {
+                            model: models.clientes,
+                            as: 'idcliente_cliente', // Alias definido en init-models
+                            attributes: ['nombre', 'correo', 'telefono'] // Datos del cliente
+                        }
+                    ]
+                }
+            ]
+        });
+
+        if (!mesa || (mesa.estado !== 'reservada' && mesa.estado !== 'ocupada')) {
+            return res.status(404).json({ error: 'Mesa no encontrada o no está reservada/ocupada' });
+        }
+
+        return res.status(200).json(mesa);
+    } catch (error) {
+        console.error('Error al obtener los detalles de la mesa: ', error);
+        return res.status(500).json({ error: 'Error al obtener los detalles de la mesa' });
     }
 });
 

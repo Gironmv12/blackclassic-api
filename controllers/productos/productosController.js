@@ -16,15 +16,20 @@ productos.post('/create',
         body('nombre').notEmpty().withMessage('Nombre es requerido'),
         body('categoria_id').isInt({ gt: 0 }).withMessage('categoria_id debe ser entero positivo'),
         body('preciounitario').isDecimal().withMessage('Precio unitario debe ser un número decimal'),
-        body('estado').isIn(['disponible', 'agotado', 'promoción']).withMessage('Estado no válido')
+        body('estado').isIn(['disponible', 'agotado', 'promoción']).withMessage('Estado no válido'),
+        body('cantidad').isDecimal({ gt: 0 }).withMessage('Cantidad debe ser un número positivo'),
+        body('puntoreorden').isDecimal({ gt: 0 }).withMessage('Punto de reorden debe ser un número positivo')
     ], 
     async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
+        const t = await sequelize.transaction();
         try {
-            const { nombre, categoria_id, preciounitario, estado, descripcion } = req.body;
+            const { nombre, categoria_id, preciounitario, estado, descripcion, cantidad, puntoreorden } = req.body;
+
+            // Crear el producto
             const newProduct = await Productos.create({
                 nombre,
                 categoria_id,
@@ -32,12 +37,23 @@ productos.post('/create',
                 estado,
                 imagen: req.file ? req.file.path : null,
                 descripcion: descripcion || null
-            });
+            }, { transaction: t });
+
+            // Crear el inventario asociado
+            await models.inventarios.create({
+                idproducto: newProduct.id,
+                cantidaddisponible: cantidad,
+                puntoreorden
+            }, { transaction: t });
+
+            await t.commit();
             res.status(201).json(newProduct);
         } catch (error) {
-            res.status(500).json({ error: 'Error al crear el producto', details: error.message });
+            await t.rollback();
+            res.status(500).json({ error: 'Error al crear el producto e inventario', details: error.message });
         }
-});
+    }
+);
 
 //obtener todos los productos
 productos.get('/', async (req, res) => {

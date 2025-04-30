@@ -30,8 +30,8 @@ export default function (sequelize) {
       allowNull: false,
     },
     metodopago: {
-      type: DataTypes.TEXT,
-      allowNull: false,
+      type: DataTypes.ENUM('efectivo', 'tarjeta'),
+      allowNull: false
     },
     fechapago: {
       type: DataTypes.DATE,
