@@ -4,13 +4,7 @@ import initModels from '../../models/init-models.js';
 import { body, validationResult } from 'express-validator';
 
 const models = initModels(sequelize);
-const {
-    pagos: Pagos,
-    ordenes: Ordenes,
-    detalleorden: DetalleOrden,
-    reservas: Reservas,
-    mesas: Mesas,
-} = models;
+const { pagos: Pagos, ordenes: Ordenes, detalleorden: DetalleOrden, reservas: Reservas, mesas: Mesas, } = models;
 
 const pagos = express.Router();
 
